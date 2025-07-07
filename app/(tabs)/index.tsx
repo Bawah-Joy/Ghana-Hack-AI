@@ -111,7 +111,6 @@ export default function HomeScreen() {
             </Pressable>
           </Link>
         </View>
-
         {/* Image Card */}
         <View
           style={[
@@ -144,7 +143,6 @@ export default function HomeScreen() {
             </View>
           </View>
         </View>
-
         {/* Swipeable Crop Buttons */}
         <View style={styles.cropButtonsContainer}>
           <Text
@@ -211,29 +209,39 @@ export default function HomeScreen() {
             ))}
           </ScrollView>
         </View>
-
         {/* Instructions */}
-      </ScrollView>
-      {/* Camera Button - Fixed at Bottom
-      <View
-        style={[
-          styles.cameraContainer,
-          { backgroundColor: isDark ? "#111827" : "#f8fafc" },
-        ]}
-      >
-        <TouchableOpacity
-          style={styles.cameraButton}
-          onPress={handleCameraPress}
-          activeOpacity={0.8}
+        <View
+          style={[
+            styles.cameraContainer,
+            { backgroundColor: isDark ? "#111827" : "#f8fafc" },
+          ]}
         >
-          <View style={styles.cameraButtonInner}>
-            <FontAwesome name="camera" size={32} color="white" />
-          </View>
-          <Text style={styles.cameraButtonText}>
-            Scan {crops[selectedCrop].name}
-          </Text>
-        </TouchableOpacity>
-      </View> */}
+          <TouchableOpacity
+            style={styles.cameraButton}
+            onPress={handleCameraPress}
+            activeOpacity={0.8}
+          >
+            <View
+              style={[
+                styles.cameraButtonInner,
+                { backgroundColor: crops[selectedCrop].color },
+              ]}
+            >
+              <FontAwesome name="camera" size={32} color="white" />
+            </View>
+            <Text
+              style={[
+                styles.cameraButtonText,
+                { color: crops[selectedCrop].color },
+              ]}
+            >
+              Scan {crops[selectedCrop].name}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+
+      {/* Camera Button - Fixed at Bottom */}
     </SafeAreaView>
   );
 }
@@ -243,7 +251,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollView: {
-    flex: 1,
+    flex: 2,
+    height: "100%",
+    marginBottom: -30,
   },
   header: {
     flexDirection: "row",

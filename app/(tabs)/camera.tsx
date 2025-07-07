@@ -1,161 +1,168 @@
-import React, { useState, useEffect, useRef } from "react";
+// app/(tabs)/camera.tsx
+import React, { useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
-  ToastAndroid,
+  StyleSheet,
   Platform,
-  Alert,
+  ToastAndroid,
+  Dimensions,
 } from "react-native";
-// @ts-ignore: missing type declarations for gesture-handler
-// import {
-//   PinchGestureHandler,
-//   TapGestureHandler,
-//   State,
-// } from "react-native-gesture-handler";
+import { useRouter } from "expo-router";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 import {
-  CameraView,
+  CameraView as ExpoCamera,
   useCameraPermissions,
   useMicrophonePermissions,
   FlashMode,
-  CameraMode,
+  CameraType,
 } from "expo-camera";
 
+const { width } = Dimensions.get("window");
+const CAPTURE_SIZE = 70;
+
 export default function CameraScreen() {
-  const [permission, requestPermission] = useCameraPermissions();
-  const [audioPermission, requestAudioPermission] = useMicrophonePermissions();
+  const router = useRouter();
+  const [cameraPerm, requestCameraPerm] = useCameraPermissions();
+  const [audioPerm, requestAudioPerm] = useMicrophonePermissions();
+  const cameraRef = useRef<ExpoCamera | null>(null);
+  const [flash, setFlash] = useState<FlashMode>("off");
+  const [type, setType] = useState<CameraType>("back");
 
-  const cameraRef = useRef<any>(null);
-  const [cameraMode, setCameraMode] = useState<CameraMode>(
-    "photo" as CameraMode
-  );
-  const [isRecording, setIsRecording] = useState(false);
-  const [zoom, setZoom] = useState(0);
-  const [flash, setFlash] = useState<FlashMode>("off" as FlashMode);
-  const [elapsedTime, setElapsedTime] = useState(0);
-
+  // Ask permissions on mount
   useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (isRecording) {
-      timer = setInterval(() => setElapsedTime((t) => t + 1), 1000);
-    }
-    return () => clearInterval(timer);
-  }, [isRecording]);
+    (async () => {
+      if (!cameraPerm?.granted) await requestCameraPerm();
+      if (!audioPerm?.granted) await requestAudioPerm();
+    })();
+  }, []);
 
+  // Toggle flash on/off
   const toggleFlash = () => {
-    const next = flash === "on" ? "off" : "on";
+    const next = flash === "off" ? "on" : "off";
     setFlash(next);
-    const msg = next === "on" ? "Flash Enabled" : "Flash Disabled";
-    if (Platform.OS === "android") ToastAndroid.show(msg, ToastAndroid.SHORT);
-    else Alert.alert(msg);
+    const msg = next === "on" ? "Flash On" : "Flash Off";
+    Platform.OS === "android"
+      ? ToastAndroid.show(msg, ToastAndroid.SHORT)
+      : alert(msg);
   };
 
-  const onPinchEvent = (e: any) => {
-    let newZoom = zoom + (e.nativeEvent.scale - 1) / 10;
-    setZoom(Math.min(Math.max(newZoom, 0), 1));
+  // Flip camera
+  const flipCamera = () => {
+    setType((old) => (old === "back" ? "front" : "back"));
   };
 
-  // const onPinchStateChange = (e: any) => {
-  //   if (e.nativeEvent.state === State.END) {
-  //     setZoom((z) => Math.min(Math.max(z, 0), 1));
-  //   }
-  // };
-
-  const handleTakePhoto = async () => {
-    try {
-      const photo = await cameraRef.current.takePictureAsync();
-      console.log("Photo captured:", photo.uri);
-    } catch (err) {
-      console.error(err);
+  // Capture photo
+  const takePicture = async () => {
+    if (cameraRef.current) {
+      try {
+        const photo = await cameraRef.current.takePictureAsync();
+        router.push({ pathname: "/predict", params: { imageUri: photo.uri } });
+      } catch (e) {
+        console.error(e);
+      }
     }
   };
 
-  const handleRecord = async () => {
-    if (isRecording) {
-      cameraRef.current.stopRecording();
-      setIsRecording(false);
-      setElapsedTime(0);
-    } else {
-      setIsRecording(true);
-      const video = await cameraRef.current.recordAsync();
-      console.log("Video saved:", video.uri);
-      setIsRecording(false);
-    }
-  };
-
-  if (!permission || !audioPermission) {
-    return <View style={{ flex: 1, backgroundColor: "black" }} />;
-  }
-
-  if (!permission.granted || !audioPermission.granted) {
+  if (!cameraPerm?.granted) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text style={{ color: "white", marginBottom: 20 }}>
-          Camera and audio permissions are required.
-        </Text>
-        <TouchableOpacity
-          onPress={requestPermission}
-          style={{ marginBottom: 10 }}
-        >
-          <Text style={{ color: "blue" }}>Grant Camera Permission</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={requestAudioPermission}>
-          <Text style={{ color: "blue" }}>Grant Audio Permission</Text>
-        </TouchableOpacity>
+      <View style={styles.centered}>
+        <Text style={styles.warnText}>Camera permission required</Text>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: "black" }}>
-      {/* <PinchGestureHandler
-        onGestureEvent={onPinchEvent}
-        onHandlerStateChange={onPinchStateChange}
-      >
-        <TapGestureHandler
-          numberOfTaps={2}
-          onHandlerStateChange={({ nativeEvent }: any) => {
-            if (nativeEvent.state === State.END) toggleFlash();
-          }}
-        > */}
-      <CameraView
-        style={{ flex: 1 }}
-        ref={cameraRef}
-        zoom={zoom}
-        flash={flash}
-        mode={cameraMode}
-      />
-      {/* </TapGestureHandler>
-      </PinchGestureHandler> */}
+    <View style={styles.container}>
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.headerBtn}
+        >
+          <FontAwesome name="arrow-left" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Capture</Text>
+        <TouchableOpacity onPress={toggleFlash} style={styles.headerBtn}>
+          <FontAwesome
+            name={flash === "on" ? "bolt" : "bolt"} // Use same icon, change color
+            size={24}
+            color={flash === "on" ? "#FFD700" : "#fff"} // yellow for on, white for off
+          />
+        </TouchableOpacity>
+      </View>
 
-      <View
-        style={{
-          position: "absolute",
-          bottom: 30,
-          width: "100%",
-          flexDirection: "row",
-          justifyContent: "center",
-        }}
-      >
-        <TouchableOpacity
-          onPress={handleTakePhoto}
-          style={{ marginHorizontal: 20 }}
-        >
-          <Text style={{ color: "white", fontSize: 24 }}>📸</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={handleRecord}
-          style={{ marginHorizontal: 20 }}
-        >
-          <Text style={{ color: "white", fontSize: 24 }}>
-            {isRecording
-              ? `⏹️ ${Math.floor(elapsedTime / 60)}:${(elapsedTime % 60)
-                  .toString()
-                  .padStart(2, "0")}`
-              : "🎥"}
-          </Text>
-        </TouchableOpacity>
+      {/* Camera Preview */}
+      <ExpoCamera
+        ref={cameraRef}
+        style={styles.camera}
+        // facing={type}
+        flash={flash}
+      />
+
+      {/* Controls Overlay */}
+      <View style={styles.controls}>
+        {/* <TouchableOpacity onPress={flipCamera} style={styles.ctrlBtn}>
+          <FontAwesome name="retweet" size={28} color="#fff" />
+        </TouchableOpacity> */}
+        <TouchableOpacity onPress={takePicture} style={styles.captureBtn} />
+        {/* <View style={styles.ctrlPlaceholder} /> */}
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#000" },
+  centered: {
+    flex: 1,
+    backgroundColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  warnText: { color: "#fff", fontSize: 16 },
+
+  header: {
+    position: "absolute",
+    top: 0,
+    width: "100%",
+    height: 100,
+    backgroundColor: "#6B8E23",
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    paddingHorizontal: 16,
+    zIndex: 10,
+    paddingBottom: 20,
+  },
+  headerBtn: { padding: 8 },
+  headerTitle: { color: "#fff", fontSize: 18, fontWeight: "600" },
+
+  camera: { flex: 1 },
+
+  controls: {
+    position: "absolute",
+    bottom: 30,
+    width: "100%",
+    // backgroundColor: "red",
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  ctrlBtn: {
+    backgroundColor: "rgba(0,0,0,0.4)",
+    padding: 16,
+    borderRadius: 40,
+  },
+  // ctrlPlaceholder: { width: CAPTURE_SIZE }, // for symmetry
+
+  captureBtn: {
+    width: CAPTURE_SIZE,
+    height: CAPTURE_SIZE,
+    borderRadius: CAPTURE_SIZE / 2,
+    backgroundColor: "#228B22",
+    borderWidth: 4,
+    borderColor: "#fff",
+  },
+});

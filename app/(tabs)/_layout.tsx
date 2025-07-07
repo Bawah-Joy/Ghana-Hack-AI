@@ -20,7 +20,12 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+        // tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
+        tabBarActiveTintColor: "#6B8E23", // text & icon color when selected
+        tabBarInactiveTintColor: "#999", // unselected color
+        tabBarStyle: {
+          backgroundColor: "#fff",
+        },
         // Disable the header completely
         headerShown: false,
       }}

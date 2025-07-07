@@ -1,37 +1,95 @@
+// app/(tabs)/upload.tsx
 import React, { useState } from "react";
-import { View, Text, Button, Image, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  Alert,
+} from "react-native";
 import * as ImagePicker from "expo-image-picker";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 
-export default function upload() {
-  const [image, setImage] = useState<string | null>(null);
+const { width } = Dimensions.get("window");
+const CARD_WIDTH = width - 40;
 
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
+export default function UploadScreen() {
+  const [imageUri, setImageUri] = useState<string | null>(null);
+
+  const pickFromLibrary = async () => {
+    const res = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
       quality: 1,
     });
-
-    if (!result.canceled && result.assets.length > 0) {
-      setImage(result.assets[0].uri);
+    if (!res.canceled && res.assets.length > 0) {
+      setImageUri(res.assets[0].uri);
     }
   };
 
-  const handleSubmit = () => {
-    if (image) {
-      // TODO: send image to prediction function or screen
-      console.log("Submitted image:", image);
+  const takePhoto = async () => {
+    const res = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+    if (!res.canceled && res.assets.length > 0) {
+      setImageUri(res.assets[0].uri);
     }
+  };
+
+  const handleAnalyze = () => {
+    if (!imageUri) return;
+    // TODO: navigate to predict screen with imageUri
+    console.log("Analyzing:", imageUri);
+  };
+
+  const clearSelection = () => {
+    setImageUri(null);
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Upload a Crop Image</Text>
-      <Button title="Pick an image" onPress={pickImage} />
-      {image && (
-        <View style={styles.previewContainer}>
-          <Image source={{ uri: image }} style={styles.image} />
-          <Button title="Submit" onPress={handleSubmit} />
+      {/* Header */}
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Upload</Text>
+        <TouchableOpacity
+          onPress={() =>
+            Alert.alert(
+              "Info",
+              "Select or take a photo of your crop leaf for analysis."
+            )
+          }
+          style={styles.headerIcon}
+        >
+          <FontAwesome name="info-circle" size={24} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
+      {/* Choose Buttons */}
+      {!imageUri && (
+        <View style={styles.choiceRow}>
+          <TouchableOpacity style={styles.choiceBtn} onPress={takePhoto}>
+            <FontAwesome name="camera" size={28} color="#fff" />
+            <Text style={styles.choiceText}>Camera</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.choiceBtn} onPress={pickFromLibrary}>
+            <FontAwesome name="image" size={28} color="#fff" />
+            <Text style={styles.choiceText}>Gallery</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Preview Card */}
+      {imageUri && (
+        <View style={styles.previewCard}>
+          <Image source={{ uri: imageUri }} style={styles.previewImage} />
+          <TouchableOpacity style={styles.clearIcon} onPress={clearSelection}>
+            <FontAwesome name="times-circle" size={28} color="#B22222" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.actionBtn} onPress={handleAnalyze}>
+            <Text style={styles.actionText}>Analyze</Text>
+          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -39,41 +97,61 @@ export default function upload() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: "center",
+  container: { flex: 1, backgroundColor: "#F0F8FF" },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#6B8E23",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    paddingTop: "15%",
+  },
+  headerTitle: { flex: 1, color: "#fff", fontSize: 20, fontWeight: "bold" },
+  headerIcon: { padding: 4 },
+
+  choiceRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    marginTop: 40,
+  },
+  choiceBtn: {
+    alignItems: "center",
+    backgroundColor: "#6B8E23",
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    width: (width - 80) / 2,
+    elevation: 3,
+  },
+  choiceText: { marginTop: 8, color: "#fff", fontSize: 16 },
+
+  previewCard: {
+    width: CARD_WIDTH,
+    alignSelf: "center",
+    marginTop: 32,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    elevation: 3,
+    overflow: "hidden",
     alignItems: "center",
   },
-  title: { fontSize: 18, marginBottom: 20 },
-  previewContainer: { marginTop: 20, alignItems: "center" },
-  image: { width: 200, height: 200, marginVertical: 10 },
+  previewImage: {
+    width: "100%",
+    height: CARD_WIDTH * 0.75,
+    resizeMode: "cover",
+  },
+  clearIcon: {
+    position: "absolute",
+    top: 12,
+    right: 12,
+    backgroundColor: "rgba(255,255,255,0.8)",
+    borderRadius: 16,
+  },
+  actionBtn: {
+    backgroundColor: "#228B22",
+    paddingVertical: 14,
+    width: "100%",
+    alignItems: "center",
+  },
+  actionText: { color: "#fff", fontSize: 16, fontWeight: "600" },
 });
-
-// import React from "react";
-// import { StyleSheet, Text, View } from "react-native";
-
-// export default function upload() {
-//   return (
-//     <View style={styles.container}>
-//       <Text style={styles.title}>Upload</Text>
-//     </View>
-//   );
-// }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     flex: 1,
-//     alignItems: "center",
-//     justifyContent: "center",
-//   },
-//   title: {
-//     fontSize: 20,
-//     fontWeight: "bold",
-//   },
-//   separator: {
-//     marginVertical: 30,
-//     height: 1,
-//     width: "80%",
-//   },
-// });
