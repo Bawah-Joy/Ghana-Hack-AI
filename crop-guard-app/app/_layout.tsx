@@ -7,7 +7,8 @@ import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
-import { HistoryProvider } from '@/app/context/HistoryContext';
+import { HistoryProvider } from '@/context/HistoryContext';
+
 
 export {
   ErrorBoundary,
@@ -46,6 +47,9 @@ export default function RootLayout() {
   return <RootLayoutNav />;
 }
 
+
+
+
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
@@ -64,14 +68,13 @@ function RootLayoutNav() {
             name="(tabs)" 
             options={{ 
               headerShown: false,
-              gestureEnabled: false,
             }} 
           />
           <Stack.Screen 
             name="camera" 
             options={{ 
               headerShown: false,
-              gestureEnabled: false,
+              presentation: "fullScreenModal"
             }} 
           />
           <Stack.Screen 
@@ -79,6 +82,7 @@ function RootLayoutNav() {
             options={{ 
               headerShown: false,
               gestureEnabled: false,
+              presentation: "fullScreenModal"
             }} 
           />
           <Stack.Screen 
@@ -86,6 +90,7 @@ function RootLayoutNav() {
             options={{ 
               headerShown: false,
               gestureEnabled: false,
+              presentation: "fullScreenModal"
             }} 
           />
           <Stack.Screen 

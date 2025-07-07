@@ -17,7 +17,6 @@ import Colors from '@/constants/Colors';
 
 
 
-
 const { width } = Dimensions.get('window');
 
 // Crop data with placeholder images
@@ -57,10 +56,7 @@ export default function HomeScreen() {
   const isDark = colorScheme === 'dark';
   const [selectedCrop, setSelectedCrop] = useState(0);
 
-  const handleCameraPress = () => {
-    // Navigate to camera screen
-    router.push('/camera');
-  };
+  
 
   const handleCropSelect = (index: number) => {
     setSelectedCrop(index);
@@ -156,11 +152,13 @@ export default function HomeScreen() {
       </ScrollView>
 
       {/* Camera Button - Fixed at Bottom */}
+  
       <View style={[styles.cameraContainer, { backgroundColor: isDark ? '#111827' : '#f8fafc' }]}>
         <TouchableOpacity
           style={styles.cameraButton}
-          onPress={handleCameraPress}
           activeOpacity={0.8}
+          onPress={() => router.push('/camera')}
+
         >
           <View style={styles.cameraButtonInner}>
             <FontAwesome name="camera" size={32} color="white" />
@@ -168,6 +166,7 @@ export default function HomeScreen() {
           <Text style={styles.cameraButtonText}>Scan {crops[selectedCrop].name}</Text>
         </TouchableOpacity>
       </View>
+      
     </SafeAreaView>
   );
 }

@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
-import { useHistory } from '@/app/context/HistoryContext';
+import { useHistory } from '@/context/HistoryContext';
 
 export default function FeedbackScreen() {
   const { addToHistory } = useHistory();

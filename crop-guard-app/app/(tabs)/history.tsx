@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, TouchableOpacity, Image, FlatList } from 'react
 import { router } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useColorScheme } from '@/components/useColorScheme';
-import { useHistory, ScanResult} from '../context/HistoryContext';
+import { useHistory, ScanResult} from '../../context/HistoryContext';
 
 import { format } from 'date-fns';
 

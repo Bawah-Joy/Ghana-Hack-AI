@@ -3,7 +3,7 @@ import { StyleSheet, View, Text, TouchableOpacity, Image } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useColorScheme } from '@/components/useColorScheme';
-import Colors from '@/constants/Colors';
+
 
 export default function PreviewScreen() {
   const colorScheme = useColorScheme();
