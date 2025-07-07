@@ -10,18 +10,42 @@ export default function FeedbackScreen() {
   const { addToHistory } = useHistory();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { imageUri } = useLocalSearchParams<{ imageUri: string }>();
-  const [isLoading, setIsLoading] = useState(true);
+  const { 
+    imageUri, 
+    diagnosis: initialDiagnosis, 
+    confidence: initialConfidence, 
+    cropType: initialCropType,
+    fromHistory 
+  } = useLocalSearchParams<{ 
+    imageUri: string; 
+    diagnosis?: string; 
+    confidence?: string; 
+    cropType?: string;
+    fromHistory?: string;
+  }>();
+  
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [diagnosis, setDiagnosis] = useState<string | null>(null);
   const [confidence, setConfidence] = useState<number | null>(null);
+  const [cropType, setCropType] = useState<string>("Maize");
+
 
   // Simulate API call to get model results
   useEffect(() => {
+    // Check if we have initial data (from history)
+    if (initialDiagnosis && initialConfidence) {
+      setDiagnosis(initialDiagnosis);
+      setConfidence(parseInt(initialConfidence));
+      if (initialCropType) setCropType(initialCropType);
+      setIsLoading(false);
+      return;
+    }
+
     const simulateAnalysis = async () => {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Simulated results - replace with actual API call
+      // Simulated results
       const diagnosisResult = "Healthy Plant";
       const confidenceResult = 95;
       
@@ -29,14 +53,14 @@ export default function FeedbackScreen() {
       setConfidence(confidenceResult);
       setIsLoading(false);
 
-      // Save to history after analysis
-      if (imageUri) {
+      // Save to history after analysis (only if not from history)
+      if (imageUri && fromHistory !== 'true') {
         addToHistory({
           imageUri: imageUri,
           diagnosis: diagnosisResult,
           confidence: confidenceResult,
           date: new Date().toISOString(),
-          cropType: "Maize" // You'll need to pass the selected crop from previous screens
+          cropType: cropType
         });
       }
     };

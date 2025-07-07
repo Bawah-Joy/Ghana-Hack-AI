@@ -13,6 +13,7 @@ export interface ScanResult {
 interface HistoryContextType {
   history: ScanResult[];
   addToHistory: (result: Omit<ScanResult, 'id'>) => Promise<void>;
+  removeFromHistory: (id: string) => Promise<void>;
   clearHistory: () => Promise<void>;
   loading: boolean;
 }
@@ -65,8 +66,19 @@ export const HistoryProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   };
 
+  const removeFromHistory = async (id: string) => {
+    const newHistory = history.filter(item => item.id !== id);
+    setHistory(newHistory);
+    
+    try {
+      await AsyncStorage.setItem('scanHistory', JSON.stringify(newHistory));
+    } catch (error) {
+      console.error('Failed to remove item from history:', error);
+    }
+  };
+
   return (
-    <HistoryContext.Provider value={{ history, addToHistory, clearHistory, loading }}>
+    <HistoryContext.Provider value={{ history, addToHistory, clearHistory,removeFromHistory, loading }}>
       {children}
     </HistoryContext.Provider>
   );

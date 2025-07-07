@@ -10,31 +10,52 @@ import { format } from 'date-fns';
 export default function HistoryScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
-  const { history, clearHistory, loading } = useHistory();
-
+  const { history, clearHistory, removeFromHistory, loading } = useHistory();
+  
   const handleBack = () => {
     router.back();
   };
 
   const renderItem = ({ item }: { item: ScanResult }) => (
-    <TouchableOpacity 
-      style={[styles.historyItem, { backgroundColor: isDark ? '#1f2937' : '#ffffff' }]}
-      onPress={() => router.push(`/feedback?imageUri=${item.imageUri}`)}
-    >
-      <Image source={{ uri: item.imageUri }} style={styles.historyImage} />
-      <View style={styles.historyDetails}>
-        <Text style={[styles.historyCrop, { color: isDark ? '#fff' : '#1f2937' }]}>
-          {item.cropType}
-        </Text>
-        <Text style={[styles.historyDiagnosis, { color: item.diagnosis === 'Healthy Plant' ? '#22c55e' : '#ef4444' }]}>
-          {item.diagnosis}
-        </Text>
-        <Text style={[styles.historyDate, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
-          {format(new Date(item.date), 'MMM dd, yyyy h:mm a')}
-        </Text>
-      </View>
-      <FontAwesome name="chevron-right" size={16} color={isDark ? '#9ca3af' : '#6b7280'} />
-    </TouchableOpacity>
+    <View style={[styles.historyItem, { backgroundColor: isDark ? '#1f2937' : '#ffffff' }]}>
+      {/* Content area (clickable to view details) */}
+      <TouchableOpacity 
+        style={styles.historyContent}
+        onPress={() => router.push({
+          pathname: '/feedback',
+          params: { 
+            imageUri: item.imageUri,
+            // Pass existing data to prevent re-analysis
+            diagnosis: item.diagnosis,
+            confidence: item.confidence.toString(),
+            cropType: item.cropType,
+            // Flag to indicate this is from history
+            fromHistory: 'true'
+          }
+        })}
+      >
+        <Image source={{ uri: item.imageUri }} style={styles.historyImage} />
+        <View style={styles.historyDetails}>
+          <Text style={[styles.historyCrop, { color: isDark ? '#fff' : '#1f2937' }]}>
+            {item.cropType}
+          </Text>
+          <Text style={[styles.historyDiagnosis, { color: item.diagnosis === 'Healthy Plant' ? '#22c55e' : '#ef4444' }]}>
+            {item.diagnosis}
+          </Text>
+          <Text style={[styles.historyDate, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
+            {format(new Date(item.date), 'MMM dd, yyyy h:mm a')}
+          </Text>
+        </View>
+      </TouchableOpacity>
+      
+      {/* Delete button */}
+      <TouchableOpacity 
+        style={styles.deleteButton}
+        onPress={() => removeFromHistory(item.id)}
+      >
+        <FontAwesome name="trash" size={20} color="#ef4444" />
+      </TouchableOpacity>
+    </View>
   );
 
   return (
@@ -119,6 +140,15 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 8,
     marginRight: 16,
+  },
+  historyContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  deleteButton: {
+    padding: 8,
+    marginLeft: 10,
   },
   historyDetails: {
     flex: 1,
