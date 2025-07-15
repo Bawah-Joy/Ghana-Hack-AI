@@ -5,9 +5,11 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
 import { useHistory } from '@/context/HistoryContext';
+import { useRouter } from 'expo-router';
 
 export default function FeedbackScreen() {
   const { addToHistory } = useHistory();
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
   const { 
@@ -73,7 +75,7 @@ export default function FeedbackScreen() {
   };
 
   const handleBack = () => {
-    if (router.canGoBack()) {
+    if (router?.canGoBack?.()) {
       router.back();
     } else {
       router.replace('/(tabs)');
@@ -81,7 +83,7 @@ export default function FeedbackScreen() {
   };
 
   const handleGoHome = () => {
-    router.replace('/(tabs)');
+    router?.replace?.('/(tabs)');
   };
 
   return (

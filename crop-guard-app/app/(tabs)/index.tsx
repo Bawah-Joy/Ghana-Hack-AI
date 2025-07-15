@@ -157,7 +157,7 @@ export default function HomeScreen() {
         <TouchableOpacity
           style={styles.cameraButton}
           activeOpacity={0.8}
-          onPress={() => router.push('/camera')}
+          onPress={() => router?.push?.('/camera')}
 
         >
           <View style={styles.cameraButtonInner}>

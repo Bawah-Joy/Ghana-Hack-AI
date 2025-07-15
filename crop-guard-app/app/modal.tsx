@@ -2,11 +2,12 @@ import { Platform, StyleSheet, TouchableOpacity } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useColorScheme } from '@/components/useColorScheme';
 import { Text, View } from '@/components/Themed';
-import { router } from 'expo-router';
+import { useRouter } from 'expo-router';
 
 export default function ModalScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const router = useRouter();
 
   const handleClose = () => {
     router.back();

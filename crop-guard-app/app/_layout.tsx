@@ -5,18 +5,16 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
-
 import { useColorScheme } from '@/components/useColorScheme';
 import { HistoryProvider } from '@/context/HistoryContext';
-
 
 export {
   ErrorBoundary,
 } from 'expo-router';
 
 // Development mode settings
-const DEVELOPMENT_MODE = false; // Set to false for production
-const DESIGN_SCREEN = 'splash'; // Change this to test different screens
+const DEVELOPMENT_MODE = false;
+const DESIGN_SCREEN = 'splash';
 
 export const unstable_settings = {
   initialRouteName: DEVELOPMENT_MODE ? DESIGN_SCREEN : 'splash',
@@ -47,13 +45,11 @@ export default function RootLayout() {
   return <RootLayoutNav />;
 }
 
-
-
-
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
 
   return (
+    // REMOVED NavigationContainer wrapper
     <HistoryProvider>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack screenOptions={{ headerShown: false }}>
@@ -74,29 +70,26 @@ function RootLayoutNav() {
             name="camera" 
             options={{ 
               headerShown: false,
-              presentation: "fullScreenModal"
+              presentation: "modal"
             }} 
           />
           <Stack.Screen 
             name="preview" 
             options={{ 
               headerShown: false,
-              gestureEnabled: false,
-              presentation: "fullScreenModal"
+              presentation: "modal"
             }} 
           />
           <Stack.Screen 
             name="feedback" 
             options={{ 
               headerShown: false,
-              gestureEnabled: false,
-              presentation: "fullScreenModal"
+              presentation: "modal"
             }} 
           />
           <Stack.Screen 
             name="modal" 
             options={{ 
-              headerShown: false,
               presentation: 'modal',
             }} 
           />
