@@ -1,9 +1,23 @@
-import joblib
-from app.schemas.predict import InputData, PredictionResponse
+import gc
+# from app.pipelines.sentiment_pipeline import load_model as load_sentiment, predict_sentiment
+from app.pipelines.main_pipeline import load_model as load_maize, predict_image
 
-model = joblib.load("model/classifier.pkl")
+_cache = {}
 
-def get_prediction(data: InputData) -> PredictionResponse:
-    pred = model.predict([data.text])[0]
-    prob = max(model.predict_proba([data.text])[0])
-    return PredictionResponse(label=pred, confidence=round(prob, 3))
+async def predict(req, file):
+    name = req.model_name
+    # choose loader/predictor
+    # if name == "sentiment":
+        # loader, predictor, data = load_sentiment, predict_sentiment, req.text
+    if name.startswith("xception_"):
+        loader, predictor, data = load_maize, predict_image, await file.read()
+    else:
+        raise ValueError("Unknown model")
+
+    # load-on-demand
+    if name not in _cache:
+        _cache[name] = loader(name)
+    model = _cache[name]
+
+    label, conf = predictor(data, model, name)
+    return {"model": name, "label": label, "confidence": conf}
