@@ -1,4 +1,4 @@
-\_
+.
 
 > [!NOTE]
-> Make sure that all 4 models are in the models dir and have these exact names. `(xception\_< maize | cassava | cashew | tomato >.keras)`
+> Make sure that all 4 models are in the models dir and have these exact names. `(xception_< maize | cassava | cashew | tomato >.keras)`
