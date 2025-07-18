@@ -67,6 +67,23 @@ The server currently supports the following models:
 
 ---
 
+## Model Downloads
+
+To use the prediction server, you must download the pre-trained models and place them in the appropriate directory (`models/` by default). You can download them from the following links:
+
+- **Cassava Model**: [Download](https://drive.google.com/file/d/11mvp4TuIQ5NATksrRki-z2gWjJyU-j85/view?usp=sharing)
+- **Maize Model**: [Download](https://drive.google.com/file/d/1TLtyN5uzFUwMVL6TjTN3ejKZtZBXi2hw/view?usp=sharing)
+- **Tomato Model**: [Download](https://drive.google.com/file/d/1A9a-t3kspjdxqmqz11OoK62D9JPortw3/view?usp=sharing)
+- **Cashew Model**: [Download](https://drive.google.com/file/d/1lxlHR6lWyOJJwZb9cE6JST8yEd8VtcZK/view?usp=sharing)
+
+**After downloading:**
+
+1.  Create a folder named `models` in the project root if it doesn’t already exist.
+2.  Place the `.pkl` model files inside that `models/` folder.
+3.  The server will automatically load the relevant model based on the selected crop during prediction.
+
+---
+
 ## 🚀 Running Locally
 
 1. **Start the server**:
