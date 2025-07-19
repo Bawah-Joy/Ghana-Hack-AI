@@ -5,7 +5,7 @@
  *  - DEV : your ngrok or local dev server
  *  - PROD: your hosted backend
  */
-const DEV_BASE_URL = "https://18d8602bf13a.ngrok-free.app";
+const DEV_BASE_URL = "https://a1848b133bf0.ngrok-free.app";
 const PROD_BASE_URL = "https://your-backend-url.onrender.com";
 
 /** Pick the right base URL */

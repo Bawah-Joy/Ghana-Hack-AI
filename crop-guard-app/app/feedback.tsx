@@ -334,7 +334,7 @@ export default function FeedbackScreen() {
                 />
                 <Text
                   style={[
-                    styles.recommendationsTitle,
+                    styles.resultLabel,
                     { color: isDark ? "#fff" : "#1f2937" },
                   ]}
                 >
