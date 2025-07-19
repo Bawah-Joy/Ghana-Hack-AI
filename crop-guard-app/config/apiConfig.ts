@@ -1,37 +1,33 @@
 // config/apiConfig.ts
 
-import { Platform } from "react-native";
+/**
+ * Base URLs
+ *  - DEV : your ngrok or local dev server
+ *  - PROD: your hosted backend
+ */
+const DEV_BASE_URL = "https://18d8602bf13a.ngrok-free.app";
+const PROD_BASE_URL = "https://your-backend-url.onrender.com";
 
-export const API_CONFIG = {
-  LOCALHOST: "http://localhost:8000",
-  ANDROID_EMULATOR: "https://18d8602bf13a.ngrok-free.app",
-  // ANDROID_EMULATOR: "http://10.0.2.2:8000",
-  PRODUCTION: "https://your-backend-url.onrender.com",
-  ENDPOINTS: {
-    PREDICT: "/predict",
-  },
-};
+/** Pick the right base URL */
+const BASE_URL = __DEV__ ? DEV_BASE_URL : PROD_BASE_URL;
 
-// pick the right base URL
-export function getApiUrl() {
-  if (__DEV__) {
-    return Platform.OS === "android"
-      ? API_CONFIG.ANDROID_EMULATOR
-      : API_CONFIG.LOCALHOST;
-  }
-  return API_CONFIG.PRODUCTION;
+/** API endpoints */
+export const ENDPOINTS = {
+  PREDICT: "/predict",
+} as const;
+
+/** Build a full URL for a given endpoint key */
+export function getEndpointUrl(endpoint: keyof typeof ENDPOINTS): string {
+  return `${BASE_URL}${ENDPOINTS[endpoint]}`;
 }
 
-// full URL builder
-export function getEndpointUrl(endpoint: keyof typeof API_CONFIG.ENDPOINTS) {
-  return getApiUrl() + API_CONFIG.ENDPOINTS[endpoint];
-}
-
-// map crop type → model name
+/** Crop → model mapping */
 export const CROP_TO_MODEL_MAP: Record<string, string> = {
   Maize: "xception_maize",
   Cassava: "xception_cassava",
   Cashew: "xception_cashew",
   Tomato: "xception_tomato",
 };
-export const DEFAULT_MODEL = "xception_maize";
+
+/** Fallback model if none selected */
+export const DEFAULT_MODEL = CROP_TO_MODEL_MAP["Maize"];
