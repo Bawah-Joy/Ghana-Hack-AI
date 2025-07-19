@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Image, ActivityIndicator, ScrollView, Modal, Dimensions } from 'react-native';
+import { StyleSheet, View, Text, TouchableOpacity, Image, ActivityIndicator, ScrollView, Modal, Dimensions, Alert } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useColorScheme } from '@/components/useColorScheme';
 import Colors from '@/constants/Colors';
 import { useHistory } from '@/context/HistoryContext';
 import { useRouter } from 'expo-router';
+import { getEndpointUrl, CROP_TO_MODEL_MAP, getRecommendations } from '@/config/apiConfig';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -34,46 +35,118 @@ export default function FeedbackScreen() {
   const [cropType, setCropType] = useState<string>("Maize");
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
   const [recommendations, setRecommendations] = useState<string[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (initialDiagnosis && initialConfidence) {
-      setDiagnosis(initialDiagnosis);
-      setConfidence(parseInt(initialConfidence));
-      if (initialCropType) setCropType(initialCropType);
+  // Function to call the FastAPI backend
+  const callBackendAPI = async () => {
+    if (!imageUri) {
+      setError('No image provided');
       setIsLoading(false);
       return;
     }
 
-    const callBackendAPI = async () => {
-      setIsLoading(true);
-      try {
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        const diagnosisResult = "Healthy Plant";
-        const confidenceResult = 95;
-        const recommendationsResult : string[] = [];
-        
-        setDiagnosis(diagnosisResult);
-        setConfidence(confidenceResult);
-        setRecommendations(recommendationsResult);
-        setIsLoading(false);
+    setIsLoading(true);
+    setError(null);
 
-        if (imageUri && fromHistory !== 'true') {
-          addToHistory({
-            imageUri: imageUri,
-            diagnosis: diagnosisResult,
-            confidence: confidenceResult,
-            date: new Date().toISOString(),
-            cropType: cropType
-          });
-        }
-      } catch (error) {
-        console.error('Backend API error:', error);
-        setIsLoading(false);
+    try {
+      // Get the model name based on crop type
+      const modelName = CROP_TO_MODEL_MAP[cropType] || 'xception_maize';
+      
+      // Create FormData for multipart/form-data request
+      const formData = new FormData();
+      formData.append('model_name', modelName);
+      
+      // Add the image file
+      const imageFile = {
+        uri: imageUri,
+        type: 'image/jpeg', // or detect from uri
+        name: 'plant_image.jpg',
+      } as any;
+      formData.append('file', imageFile);
+
+      const apiUrl = getEndpointUrl('PREDICT');
+      console.log(`Making request to ${apiUrl} with model: ${modelName}`);
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
 
+      const result = await response.json();
+      console.log('API Response:', result);
+
+      // Extract results from API response
+      const diagnosisResult = result.label || 'Unknown';
+      const confidenceResult = Math.round((result.confidence || 0) * 100);
+      
+      // Get recommendations based on diagnosis
+      const recommendationsResult = getRecommendations(diagnosisResult);
+
+      setDiagnosis(diagnosisResult);
+      setConfidence(confidenceResult);
+      setRecommendations(recommendationsResult);
+
+      // Add to history if not from history
+      if (fromHistory !== 'true') {
+        addToHistory({
+          imageUri: imageUri,
+          diagnosis: diagnosisResult,
+          confidence: confidenceResult,
+          date: new Date().toISOString(),
+          cropType: cropType
+        });
+      }
+
+    } catch (error) {
+      console.error('Backend API error:', error);
+      setError(error instanceof Error ? error.message : 'Failed to analyze image');
+      
+      // Show user-friendly error
+      Alert.alert(
+        'Analysis Failed',
+        'Unable to connect to the analysis server. Please check your internet connection and try again.',
+        [{ text: 'OK' }]
+      );
+      
+      // Set fallback data
+      setDiagnosis('Analysis Failed');
+      setConfidence(0);
+      setRecommendations(['Please try scanning the image again', 'Check your internet connection']);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // If we have initial data (from history), use it
+    if (initialDiagnosis && initialConfidence) {
+      setDiagnosis(initialDiagnosis);
+      setConfidence(parseInt(initialConfidence));
+      if (initialCropType) setCropType(initialCropType);
+      
+      // Get recommendations for historical data
+      const recommendationsResult = getRecommendations(initialDiagnosis);
+      setRecommendations(recommendationsResult);
+      
+      setIsLoading(false);
+      return;
+    }
+
+    // Set crop type from params
+    if (initialCropType) {
+      setCropType(initialCropType);
+    }
+
+    // Call the actual API
     callBackendAPI();
-  }, [imageUri]);
+  }, [imageUri, initialCropType]);
 
   const handleNewScan = () => {
     router.push('/camera');
@@ -125,7 +198,7 @@ export default function FeedbackScreen() {
           <FontAwesome name="times" size={24} color="white" />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: isDark ? '#fff' : '#1f2937' }]}>
-          Analysis Results
+          Analysis Results - {cropType}
         </Text>
       </View>
       
@@ -175,11 +248,22 @@ export default function FeedbackScreen() {
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={isDark ? '#fff' : '#1f2937'} />
             <Text style={[styles.loadingText, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
-              Analyzing plant health...
+              Analyzing {cropType.toLowerCase()} plant health...
+            </Text>
+            <Text style={[styles.loadingSubtext, { color: isDark ? '#6b7280' : '#9ca3af' }]}>
+              This may take a few moments
             </Text>
           </View>
         ) : (
           <View style={styles.resultsContent}>
+            {/* Error Display */}
+            {error && (
+              <View style={styles.errorContainer}>
+                <FontAwesome name="exclamation-triangle" size={20} color="#ef4444" />
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+
             {/* Diagnosis and Confidence */}
             <View style={styles.summarySection}>
               <View style={styles.resultRow}>
@@ -188,7 +272,8 @@ export default function FeedbackScreen() {
                   Diagnosis:
                 </Text>
                 <Text style={[styles.resultValue, { 
-                  color: diagnosis === 'Healthy Plant' ? '#22c55e' : '#ef4444' 
+                  color: diagnosis === 'Healthy Plant' || diagnosis?.toLowerCase().includes('healthy') 
+                    ? '#22c55e' : '#ef4444' 
                 }]}>
                   {diagnosis}
                 </Text>
@@ -247,7 +332,7 @@ export default function FeedbackScreen() {
                     textAlign: 'center',
                     fontStyle: 'italic'
                   }]}>
-                    No recommendations available
+                    No specific recommendations available for this condition
                   </Text>
                 )}
               </ScrollView>
@@ -423,11 +508,32 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 20,
+    gap: 15,
   },
   loadingText: {
     fontSize: 18,
     textAlign: 'center',
+    fontWeight: '500',
+  },
+  loadingSubtext: {
+    fontSize: 14,
+    textAlign: 'center',
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 15,
+    padding: 10,
+    backgroundColor: '#fef2f2',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+  },
+  errorText: {
+    color: '#dc2626',
+    fontSize: 14,
+    flex: 1,
   },
   modalContainer: {
     flex: 1,
