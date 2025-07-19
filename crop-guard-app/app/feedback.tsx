@@ -1,46 +1,77 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Image, ActivityIndicator, ScrollView, Modal, Dimensions, Alert } from 'react-native';
-import { router, useLocalSearchParams } from 'expo-router';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useColorScheme } from '@/components/useColorScheme';
-import Colors from '@/constants/Colors';
-import { useHistory } from '@/context/HistoryContext';
-import { useRouter } from 'expo-router';
-import { getEndpointUrl, CROP_TO_MODEL_MAP, getRecommendations } from '@/config/apiConfig';
+import React, { useState, useEffect } from "react";
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  Image,
+  ActivityIndicator,
+  ScrollView,
+  Modal,
+  Dimensions,
+  Alert,
+  Platform,
+} from "react-native";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { useColorScheme } from "@/components/useColorScheme";
+import Colors from "@/constants/Colors";
+import { useHistory } from "@/context/HistoryContext";
+import {
+  getEndpointUrl,
+  CROP_TO_MODEL_MAP,
+  DEFAULT_MODEL,
+} from "@/config/apiConfig";
 
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
+
+type Recommendation = {
+  description: string;
+  symptoms: string[];
+  treatment: string;
+  prevention: string;
+  message: string;
+};
+
+type PredictResponse = {
+  model: string;
+  label: string;
+  confidence: number;
+  recommendation: Recommendation;
+};
 
 export default function FeedbackScreen() {
   const { addToHistory } = useHistory();
   const router = useRouter();
   const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-  const { 
-    imageUri, 
-    diagnosis: initialDiagnosis, 
-    confidence: initialConfidence, 
+  const isDark = colorScheme === "dark";
+  const {
+    imageUri,
+    diagnosis: initialDiagnosis,
+    confidence: initialConfidence,
     cropType: initialCropType,
-    fromHistory 
-  } = useLocalSearchParams<{ 
-    imageUri: string; 
-    diagnosis?: string; 
-    confidence?: string; 
+    fromHistory,
+  } = useLocalSearchParams<{
+    imageUri: string;
+    diagnosis?: string;
+    confidence?: string;
     cropType?: string;
     fromHistory?: string;
   }>();
-  
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [diagnosis, setDiagnosis] = useState<string | null>(null);
   const [confidence, setConfidence] = useState<number | null>(null);
   const [cropType, setCropType] = useState<string>("Maize");
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
-  const [recommendations, setRecommendations] = useState<string[]>([]);
+  const [recommendation, setRecommendation] = useState<Recommendation | null>(
+    null
+  );
   const [error, setError] = useState<string | null>(null);
 
-  // Function to call the FastAPI backend
   const callBackendAPI = async () => {
     if (!imageUri) {
-      setError('No image provided');
+      setError("No image provided");
       setIsLoading(false);
       return;
     }
@@ -49,177 +80,132 @@ export default function FeedbackScreen() {
     setError(null);
 
     try {
-      // Get the model name based on crop type
-      const modelName = CROP_TO_MODEL_MAP[cropType] || 'xception_maize';
-      
-      // Create FormData for multipart/form-data request
+      const modelName = CROP_TO_MODEL_MAP[cropType] || DEFAULT_MODEL;
+
       const formData = new FormData();
-      formData.append('model_name', modelName);
-      
-      // Add the image file
-      const imageFile = {
+      formData.append("model_name", modelName);
+
+      formData.append("file", {
         uri: imageUri,
-        type: 'image/jpeg', // or detect from uri
-        name: 'plant_image.jpg',
-      } as any;
-      formData.append('file', imageFile);
+        type: "image/jpeg",
+        name: "plant_image.jpg",
+      } as any);
+      console.table("Endpoint: ", getEndpointUrl("PREDICT"));
 
-      const apiUrl = getEndpointUrl('PREDICT');
-      console.log(`Making request to ${apiUrl} with model: ${modelName}`);
-
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      const response = await fetch(getEndpointUrl("PREDICT"), {
+        method: "POST",
         body: formData,
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`Server error: ${response.status}`);
       }
 
-      const result = await response.json();
-      console.log('API Response:', result);
+      const result = (await response.json()) as PredictResponse;
+      console.log("API Response:", result);
 
-      // Extract results from API response
-      const diagnosisResult = result.label || 'Unknown';
-      const confidenceResult = Math.round((result.confidence || 0) * 100);
-      
-      // Get recommendations based on diagnosis
-      const recommendationsResult = getRecommendations(diagnosisResult);
+      setDiagnosis(result.label);
+      setConfidence(Math.round(result.confidence * 100));
+      setRecommendation(result.recommendation);
 
-      setDiagnosis(diagnosisResult);
-      setConfidence(confidenceResult);
-      setRecommendations(recommendationsResult);
-
-      // Add to history if not from history
-      if (fromHistory !== 'true') {
+      if (fromHistory !== "true") {
         addToHistory({
-          imageUri: imageUri,
-          diagnosis: diagnosisResult,
-          confidence: confidenceResult,
+          imageUri,
+          diagnosis: result.label,
+          confidence: Math.round(result.confidence * 100),
           date: new Date().toISOString(),
-          cropType: cropType
+          cropType,
         });
       }
-
-    } catch (error) {
-      console.error('Backend API error:', error);
-      setError(error instanceof Error ? error.message : 'Failed to analyze image');
-      
-      // Show user-friendly error
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : String(err));
       Alert.alert(
-        'Analysis Failed',
-        'Unable to connect to the analysis server. Please check your internet connection and try again.',
-        [{ text: 'OK' }]
+        "Analysis Failed",
+        "Unable to connect to the analysis server. Please try again.",
+        [{ text: "OK" }]
       );
-      
-      // Set fallback data
-      setDiagnosis('Analysis Failed');
+      setDiagnosis("Analysis Failed");
       setConfidence(0);
-      setRecommendations(['Please try scanning the image again', 'Check your internet connection']);
+      setRecommendation(null);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    // If we have initial data (from history), use it
     if (initialDiagnosis && initialConfidence) {
       setDiagnosis(initialDiagnosis);
-      setConfidence(parseInt(initialConfidence));
+      setConfidence(parseInt(initialConfidence, 10));
       if (initialCropType) setCropType(initialCropType);
-      
-      // Get recommendations for historical data
-      const recommendationsResult = getRecommendations(initialDiagnosis);
-      setRecommendations(recommendationsResult);
-      
       setIsLoading(false);
       return;
     }
-
-    // Set crop type from params
     if (initialCropType) {
       setCropType(initialCropType);
     }
-
-    // Call the actual API
     callBackendAPI();
   }, [imageUri, initialCropType]);
 
-  const handleNewScan = () => {
-    router.push('/camera');
-  };
+  const handleGoHome = () => router.replace("/(tabs)");
+  const handleNewScan = () => router.push("/camera");
+  const handleBack = () =>
+    router.canGoBack() ? router.back() : handleGoHome();
 
-  const handleBack = () => {
-    if (router?.canGoBack?.()) {
-      router.back();
-    } else {
-      router.replace('/(tabs)');
-    }
-  };
+  const getConfidenceColor = (conf: number) =>
+    conf >= 90 ? "#22c55e" : conf >= 70 ? "#f59e0b" : "#ef4444";
 
-  const handleGoHome = () => {
-    try {
-      if (router?.replace) {
-        router.replace('/(tabs)');
-      } else if (router?.push) {
-        router.push('/(tabs)');
-      } else {
-        router.navigate('/(tabs)');
-      }
-    } catch (error) {
-      console.error('Navigation error:', error);
-      router.push('/(tabs)');
-    }
-  };
-
-  const getConfidenceColor = (conf: number) => {
-    if (conf >= 90) return '#22c55e';
-    if (conf >= 70) return '#f59e0b';
-    return '#ef4444';
-  };
-
-  const getConfidenceIcon = (conf: number) => {
-    if (conf >= 90) return 'check-circle';
-    if (conf >= 70) return 'exclamation-triangle';
-    return 'times-circle';
-  };
+  const getConfidenceIcon = (conf: number) =>
+    conf >= 90
+      ? "check-circle"
+      : conf >= 70
+      ? "exclamation-triangle"
+      : "times-circle";
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#111827' : '#f8fafc' }]}>
+    <View
+      style={[
+        styles.container,
+        { backgroundColor: isDark ? "#111827" : "#f8fafc" },
+      ]}
+    >
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-          style={[styles.closeButton, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]} 
+        <TouchableOpacity
+          style={[
+            styles.closeButton,
+            { backgroundColor: "rgba(0, 0, 0, 0.5)" },
+          ]}
           onPress={handleBack}
         >
           <FontAwesome name="times" size={24} color="white" />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: isDark ? '#fff' : '#1f2937' }]}>
+        <Text
+          style={[styles.headerTitle, { color: isDark ? "#fff" : "#1f2937" }]}
+        >
           Analysis Results - {cropType}
         </Text>
       </View>
-      
+
       {/* Tappable Preview Image */}
       {imageUri && (
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.imageContainer}
           onPress={() => setIsImageModalVisible(true)}
           activeOpacity={0.8}
         >
-          <Image 
-            source={{ uri: imageUri }} 
-            style={styles.previewImage} 
+          <Image
+            source={{ uri: imageUri }}
+            style={styles.previewImage}
             resizeMode="cover"
           />
           <Text style={styles.tapHint}>
-            <FontAwesome name="expand" size={14} color="#6b7280" /> Tap to view full image
+            <FontAwesome name="expand" size={14} color="#6b7280" /> Tap to view
+            full image
           </Text>
         </TouchableOpacity>
       )}
-      
+
       {/* Full-screen Image Modal */}
       <Modal
         visible={isImageModalVisible}
@@ -228,29 +214,47 @@ export default function FeedbackScreen() {
         onRequestClose={() => setIsImageModalVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.modalCloseButton}
             onPress={() => setIsImageModalVisible(false)}
           >
             <FontAwesome name="times" size={30} color="white" />
           </TouchableOpacity>
-          <Image 
-            source={{ uri: imageUri }} 
-            style={styles.fullImage} 
+          <Image
+            source={{ uri: imageUri }}
+            style={styles.fullImage}
             resizeMode="contain"
           />
         </View>
       </Modal>
 
       {/* Results Card */}
-      <View style={[styles.resultsCard, { backgroundColor: isDark ? '#1f2937' : '#ffffff' }]}>
+      <View
+        style={[
+          styles.resultsCard,
+          { backgroundColor: isDark ? "#1f2937" : "#ffffff" },
+        ]}
+      >
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={isDark ? '#fff' : '#1f2937'} />
-            <Text style={[styles.loadingText, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
+            <ActivityIndicator
+              size="large"
+              color={isDark ? "#fff" : "#1f2937"}
+            />
+            <Text
+              style={[
+                styles.loadingText,
+                { color: isDark ? "#9ca3af" : "#6b7280" },
+              ]}
+            >
               Analyzing {cropType.toLowerCase()} plant health...
             </Text>
-            <Text style={[styles.loadingSubtext, { color: isDark ? '#6b7280' : '#9ca3af' }]}>
+            <Text
+              style={[
+                styles.loadingSubtext,
+                { color: isDark ? "#6b7280" : "#9ca3af" },
+              ]}
+            >
               This may take a few moments
             </Text>
           </View>
@@ -259,7 +263,11 @@ export default function FeedbackScreen() {
             {/* Error Display */}
             {error && (
               <View style={styles.errorContainer}>
-                <FontAwesome name="exclamation-triangle" size={20} color="#ef4444" />
+                <FontAwesome
+                  name="exclamation-triangle"
+                  size={20}
+                  color="#ef4444"
+                />
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
@@ -267,30 +275,57 @@ export default function FeedbackScreen() {
             {/* Diagnosis and Confidence */}
             <View style={styles.summarySection}>
               <View style={styles.resultRow}>
-                <FontAwesome name="leaf" size={20} color={isDark ? '#34d399' : '#10b981'} />
-                <Text style={[styles.resultLabel, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
+                <FontAwesome
+                  name="leaf"
+                  size={20}
+                  color={isDark ? "#34d399" : "#10b981"}
+                />
+                <Text
+                  style={[
+                    styles.resultLabel,
+                    { color: isDark ? "#9ca3af" : "#6b7280" },
+                  ]}
+                >
                   Diagnosis:
                 </Text>
-                <Text style={[styles.resultValue, { 
-                  color: diagnosis === 'Healthy Plant' || diagnosis?.toLowerCase().includes('healthy') 
-                    ? '#22c55e' : '#ef4444' 
-                }]}>
+                <Text
+                  style={[
+                    styles.resultValue,
+                    {
+                      color:
+                        diagnosis === "Healthy Plant" ||
+                        diagnosis?.toLowerCase().includes("healthy")
+                          ? "#22c55e"
+                          : "#ef4444",
+                    },
+                  ]}
+                >
                   {diagnosis}
                 </Text>
               </View>
-              
+
               <View style={styles.resultRow}>
-                <FontAwesome 
-                  name={getConfidenceIcon(confidence || 0)} 
-                  size={20} 
-                  color={getConfidenceColor(confidence || 0)} 
+                <FontAwesome
+                  name={getConfidenceIcon(confidence || 0)}
+                  size={20}
+                  color={getConfidenceColor(confidence || 0)}
                 />
-                <Text style={[styles.resultLabel, { color: isDark ? '#9ca3af' : '#6b7280' }]}>
+                <Text
+                  style={[
+                    styles.resultLabel,
+                    { color: isDark ? "#9ca3af" : "#6b7280" },
+                  ]}
+                >
                   Confidence:
                 </Text>
-                <Text style={[styles.resultValue, { 
-                  color: getConfidenceColor(confidence || 0) 
-                }]}>
+                <Text
+                  style={[
+                    styles.resultValue,
+                    {
+                      color: getConfidenceColor(confidence || 0),
+                    },
+                  ]}
+                >
                   {confidence}%
                 </Text>
               </View>
@@ -299,61 +334,166 @@ export default function FeedbackScreen() {
             {/* Recommendations Section */}
             <View style={styles.recommendationsSection}>
               <View style={styles.recommendationsHeader}>
-                <FontAwesome name="lightbulb-o" size={20} color={isDark ? '#34d399' : '#10b981'} />
-                <Text style={[styles.recommendationsTitle, { color: isDark ? '#fff' : '#1f2937' }]}>
+                <FontAwesome
+                  name="lightbulb-o"
+                  size={20}
+                  color={isDark ? "#34d399" : "#10b981"}
+                />
+                <Text
+                  style={[
+                    styles.recommendationsTitle,
+                    { color: isDark ? "#fff" : "#1f2937" },
+                  ]}
+                >
                   Treatment Recommendations
                 </Text>
               </View>
-              
-              <ScrollView 
-                style={[styles.scrollContainer, { 
-                  backgroundColor: isDark ? '#374151' : '#f9fafb' 
-                }]}
+
+              <ScrollView
+                style={[
+                  styles.scrollContainer,
+                  { backgroundColor: isDark ? "#374151" : "#f9fafb" },
+                ]}
                 contentContainerStyle={styles.scrollContent}
-                showsVerticalScrollIndicator={true}
-                persistentScrollbar={true}
               >
-                {recommendations.length > 0 ? (
-                  recommendations.map((recommendation, index) => (
-                    <View key={index} style={styles.recommendationItem}>
-                      <View style={[styles.bulletPoint, { 
-                        backgroundColor: isDark ? '#34d399' : '#10b981' 
-                      }]} />
-                      <Text style={[styles.recommendationText, { 
-                        color: isDark ? '#d1d5db' : '#4b5563' 
-                      }]}>
-                        {recommendation}
-                      </Text>
-                    </View>
-                  ))
+                {recommendation ? (
+                  <>
+                    {/* Description */}
+                    <Text
+                      style={[
+                        styles.recLabel,
+                        { color: isDark ? "#d1d5db" : "#4b5563" },
+                      ]}
+                    >
+                      Description:
+                    </Text>
+                    <Text
+                      style={[
+                        styles.recText,
+                        { color: isDark ? "#e5e7eb" : "#1f2937" },
+                      ]}
+                    >
+                      {recommendation.description}
+                    </Text>
+
+                    {/* Symptoms */}
+                    {recommendation.symptoms.length > 0 && (
+                      <>
+                        <Text
+                          style={[
+                            styles.recLabel,
+                            { color: isDark ? "#d1d5db" : "#4b5563" },
+                          ]}
+                        >
+                          Symptoms:
+                        </Text>
+                        {recommendation.symptoms.map((s, i) => (
+                          <Text
+                            key={i}
+                            style={[
+                              styles.recText,
+                              { color: isDark ? "#e5e7eb" : "#1f2937" },
+                            ]}
+                          >
+                            • {s}
+                          </Text>
+                        ))}
+                      </>
+                    )}
+
+                    {/* Treatment */}
+                    <Text
+                      style={[
+                        styles.recLabel,
+                        { color: isDark ? "#d1d5db" : "#4b5563" },
+                      ]}
+                    >
+                      Treatment:
+                    </Text>
+                    <Text
+                      style={[
+                        styles.recText,
+                        { color: isDark ? "#e5e7eb" : "#1f2937" },
+                      ]}
+                    >
+                      {recommendation.treatment}
+                    </Text>
+
+                    {/* Prevention */}
+                    <Text
+                      style={[
+                        styles.recLabel,
+                        { color: isDark ? "#d1d5db" : "#4b5563" },
+                      ]}
+                    >
+                      Prevention:
+                    </Text>
+                    <Text
+                      style={[
+                        styles.recText,
+                        { color: isDark ? "#e5e7eb" : "#1f2937" },
+                      ]}
+                    >
+                      {recommendation.prevention}
+                    </Text>
+
+                    {/* Friendly Message */}
+                    <Text
+                      style={[
+                        styles.recMessage,
+                        { color: isDark ? "#a7f3d0" : "#065f46" },
+                      ]}
+                    >
+                      {recommendation.message}
+                    </Text>
+                  </>
                 ) : (
-                  <Text style={[styles.recommendationText, { 
-                    color: isDark ? '#9ca3af' : '#6b7280',
-                    textAlign: 'center',
-                    fontStyle: 'italic'
-                  }]}>
-                    No specific recommendations available for this condition
+                  <Text
+                    style={[
+                      styles.recText,
+                      {
+                        color: isDark ? "#9ca3af" : "#6b7280",
+                        fontStyle: "italic",
+                      },
+                    ]}
+                  >
+                    No recommendations available.
                   </Text>
                 )}
               </ScrollView>
             </View>
           </View>
         )}
-        
+
         {/* Action Buttons */}
         <View style={styles.buttonContainer}>
-          <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: isDark ? '#374151' : '#f3f4f6' }]}
+          <TouchableOpacity
+            style={[
+              styles.actionButton,
+              { backgroundColor: isDark ? "#374151" : "#f3f4f6" },
+            ]}
             onPress={handleGoHome}
           >
-            <FontAwesome name="home" size={20} color={isDark ? '#fff' : '#1f2937'} />
-            <Text style={[styles.actionButtonText, { color: isDark ? '#fff' : '#1f2937' }]}>
+            <FontAwesome
+              name="home"
+              size={20}
+              color={isDark ? "#fff" : "#1f2937"}
+            />
+            <Text
+              style={[
+                styles.actionButtonText,
+                { color: isDark ? "#fff" : "#1f2937" },
+              ]}
+            >
               Home
             </Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: isDark ? '#22c55e' : '#16a34a' }]}
+
+          <TouchableOpacity
+            style={[
+              styles.actionButton,
+              { backgroundColor: isDark ? "#22c55e" : "#16a34a" },
+            ]}
             onPress={handleNewScan}
           >
             <FontAwesome name="camera" size={20} color="white" />
@@ -370,41 +510,41 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingTop: 50,
     paddingHorizontal: 20,
     paddingBottom: 10,
   },
   headerTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginLeft: 15,
   },
   closeButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
   },
   imageContainer: {
     paddingHorizontal: 20,
     paddingBottom: 15,
-    alignItems: 'center',
+    alignItems: "center",
   },
   previewImage: {
     height: 150,
-    width: '100%',
+    width: "100%",
     borderRadius: 12,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: "#f3f4f6",
   },
   tapHint: {
     marginTop: 8,
-    color: '#6b7280',
+    color: "#6b7280",
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
   },
   resultsCard: {
     flex: 1,
@@ -413,7 +553,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -425,46 +565,47 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   resultRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
     marginBottom: 12,
   },
   resultLabel: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   resultValue: {
     fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 'auto',
+    fontWeight: "bold",
+    marginLeft: "auto",
   },
   recommendationsSection: {
     flex: 1,
     marginBottom: 20,
   },
   recommendationsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
     marginBottom: 15,
   },
   recommendationsTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   scrollContainer: {
     flex: 1,
     borderRadius: 12,
     padding: 15,
+    paddingBottom: 50,
     maxHeight: 300,
   },
   scrollContent: {
     paddingBottom: 10,
   },
-  recommendationItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+  recommendationsItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
     marginBottom: 12,
     paddingRight: 10,
   },
@@ -476,85 +617,102 @@ const styles = StyleSheet.create({
     marginRight: 12,
     flexShrink: 0,
   },
-  recommendationText: {
+  recommendationsText: {
     fontSize: 14,
     lineHeight: 20,
     flex: 1,
   },
   buttonContainer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
     marginTop: 10,
   },
   actionButton: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     gap: 8,
     paddingVertical: 12,
     borderRadius: 12,
   },
   actionButtonText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   actionButtonTextWhite: {
-    color: 'white',
+    color: "white",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   loadingContainer: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     gap: 15,
   },
   loadingText: {
     fontSize: 18,
-    textAlign: 'center',
-    fontWeight: '500',
+    textAlign: "center",
+    fontWeight: "500",
   },
   loadingSubtext: {
     fontSize: 14,
-    textAlign: 'center',
+    textAlign: "center",
   },
   errorContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
     marginBottom: 15,
     padding: 10,
-    backgroundColor: '#fef2f2',
+    backgroundColor: "#fef2f2",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#fecaca',
+    borderColor: "#fecaca",
   },
   errorText: {
-    color: '#dc2626',
+    color: "#dc2626",
     fontSize: 14,
     flex: 1,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.95)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.95)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalCloseButton: {
-    position: 'absolute',
+    position: "absolute",
     top: 60,
     left: 40,
     width: 40,
     height: 40,
     borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
     zIndex: 10,
   },
   fullImage: {
     width: screenWidth * 0.95,
     height: screenHeight * 0.85,
+  },
+  recLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginTop: 12,
+  },
+
+  recText: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 8,
+  },
+
+  recMessage: {
+    fontSize: 16,
+    fontStyle: "italic",
+    marginTop: 16,
   },
 });

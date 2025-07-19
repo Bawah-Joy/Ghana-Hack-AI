@@ -1,48 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Predict</title>
-</head>
-<body>
-  <h1>Upload an Image for Prediction</h1>
-  <form id="predictForm">
-    <label for="model_name">Model Name:</label>
-    <input type="text" id="model_name" name="model_name" value="xception_maize" required />
-    <br /><br />
-    <label for="file">Choose image:</label>
-    <input type="file" id="file" name="file" accept="image/*" required />
-    <br /><br />
-    <button type="submit">Predict</button>
-  </form>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Predict</title>
+  </head>
+  <body>
+    <h1>Upload an Image for Prediction</h1>
+    <form id="predictForm">
+      <label for="model_name">Model Name:</label>
+      <input
+        type="text"
+        id="model_name"
+        name="model_name"
+        value="xception_maize"
+        required
+      />
+      <br /><br />
+      <label for="file">Choose image:</label>
+      <input type="file" id="file" name="file" accept="image/*" required />
+      <br /><br />
+      <button type="submit">Predict</button>
+    </form>
 
-  <pre id="output"></pre>
+    <pre id="output"></pre>
 
-  <script>
-    const form = document.getElementById("predictForm");
-    const output = document.getElementById("output");
+    <script>
+      const form = document.getElementById("predictForm");
+      const output = document.getElementById("output");
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
 
-      const formData = new FormData(form);
+        const formData = new FormData(form);
 
-      try {
-        const res = await fetch("http://localhost:8000/predict", {
-          method: "POST",
-          body: formData
-        });
+        try {
+          const res = await fetch("http://localhost:8000/predict", {
+            method: "POST",
+            body: formData,
+          });
 
-        if (!res.ok) {
-          throw new Error("Server returned error: " + res.status);
+          if (!res.ok) {
+            throw new Error("Server returned error: " + res.status);
+          }
+
+          const data = await res.json();
+          output.textContent = JSON.stringify(data, null, 2);
+        } catch (err) {
+          output.textContent = "Error: " + err.message;
         }
-
-        const data = await res.json();
-        output.textContent = JSON.stringify(data, null, 2);
-      } catch (err) {
-        output.textContent = "Error: " + err.message;
-      }
-    });
-  </script>
-</body>
+      });
+    </script>
+  </body>
 </html>
