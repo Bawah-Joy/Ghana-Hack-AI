@@ -154,6 +154,19 @@ export default function PreviewScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: isDark ? '#111827' : '#f8fafc' }]}>
+      {/* Header with Close Button */}
+      <View style={styles.header}>
+        <TouchableOpacity 
+          style={[styles.closeButton, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]} 
+          onPress={handleClose}
+        >
+          <FontAwesome name="times" size={24} color="white" />
+        </TouchableOpacity>
+        <Text style={[styles.headerTitle, { color: isDark ? '#fff' : '#000' }]}>
+          Preview Image
+        </Text>
+      </View>
+
       {/* Preview Image Container */}
       <View style={styles.imageContainer}>
         {(isProcessing || (!imageLoaded && !imageError)) && (
@@ -188,15 +201,7 @@ export default function PreviewScreen() {
         )}
       </View>
       
-      {/* Close Button */}
-      <TouchableOpacity 
-        style={[styles.closeButton, { backgroundColor: 'rgba(0, 0, 0, 0.5)' }]} 
-        onPress={handleClose}
-      >
-        <FontAwesome name="times" size={24} color="white" />
-      </TouchableOpacity>
-      
-      {/* Action Buttons */}
+      {/* Action Buttons - Now outside the image container */}
       <View style={styles.buttonContainer}>
         <TouchableOpacity 
           style={[styles.button, { backgroundColor: '#ef4444' }]} 
@@ -228,11 +233,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 15,
+  },
   imageContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     margin: 20,
+    marginBottom: 10, // Reduced bottom margin to make room for buttons
   },
   previewImage: {
     width: '100%',
@@ -257,24 +275,19 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   closeButton: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
     width: 40,
     height: 40,
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   buttonContainer: {
-    position: 'absolute',
-    bottom: 40,
-    left: 0,
-    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingHorizontal: 30,
+    paddingVertical: 20,
+    paddingBottom: 40, // Extra padding at bottom for safe area
   },
   button: {
     flexDirection: 'row',

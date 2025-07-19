@@ -302,6 +302,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 10,
     paddingTop: 10,
+    
   },
 
   cameraButton: {

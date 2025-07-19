@@ -70,27 +70,27 @@ function RootLayoutNav() {
             name="camera" 
             options={{ 
               headerShown: false,
-              presentation: "modal"
+              presentation: "fullScreenModal"
             }} 
           />
           <Stack.Screen 
             name="preview" 
             options={{ 
               headerShown: false,
-              presentation: "modal"
+              presentation: "fullScreenModal"
             }} 
           />
           <Stack.Screen 
             name="feedback" 
             options={{ 
               headerShown: false,
-              presentation: "modal"
+              presentation: "fullScreenModal"
             }} 
           />
           <Stack.Screen 
             name="modal" 
             options={{ 
-              presentation: 'modal',
+              presentation: 'transparentModal',
             }} 
           />
         </Stack>
