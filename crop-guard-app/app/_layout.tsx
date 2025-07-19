@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import "react-native-reanimated";
 import { useColorScheme } from "@/components/useColorScheme";
 import { HistoryProvider } from "@/context/HistoryContext";
+import { CropProvider } from "@/context/CropContext";
 
 export { ErrorBoundary } from "expo-router";
 
@@ -52,51 +53,55 @@ function RootLayoutNav() {
 
   return (
     // REMOVED NavigationContainer wrapper
-    <HistoryProvider>
-      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen
-            name="splash"
-            options={{
-              headerShown: false,
-              gestureEnabled: false,
-            }}
-          />
-          <Stack.Screen
-            name="(tabs)"
-            options={{
-              headerShown: false,
-            }}
-          />
-          <Stack.Screen
-            name="camera"
-            options={{
-              headerShown: false,
-              presentation: "fullScreenModal",
-            }}
-          />
-          <Stack.Screen
-            name="preview"
-            options={{
-              headerShown: false,
-              presentation: "fullScreenModal",
-            }}
-          />
-          <Stack.Screen
-            name="feedback"
-            options={{
-              headerShown: false,
-              presentation: "fullScreenModal",
-            }}
-          />
-          <Stack.Screen
-            name="modal"
-            options={{
-              presentation: "transparentModal",
-            }}
-          />
-        </Stack>
-      </ThemeProvider>
-    </HistoryProvider>
+    <CropProvider>
+      <HistoryProvider>
+        <ThemeProvider
+          value={colorScheme === "dark" ? DarkTheme : DefaultTheme}
+        >
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen
+              name="splash"
+              options={{
+                headerShown: false,
+                gestureEnabled: false,
+              }}
+            />
+            <Stack.Screen
+              name="(tabs)"
+              options={{
+                headerShown: false,
+              }}
+            />
+            <Stack.Screen
+              name="camera"
+              options={{
+                headerShown: false,
+                presentation: "fullScreenModal",
+              }}
+            />
+            <Stack.Screen
+              name="preview"
+              options={{
+                headerShown: false,
+                presentation: "fullScreenModal",
+              }}
+            />
+            <Stack.Screen
+              name="feedback"
+              options={{
+                headerShown: false,
+                presentation: "fullScreenModal",
+              }}
+            />
+            <Stack.Screen
+              name="modal"
+              options={{
+                presentation: "transparentModal",
+              }}
+            />
+          </Stack>
+        </ThemeProvider>
+      </HistoryProvider>
+    </CropProvider>
   );
 }

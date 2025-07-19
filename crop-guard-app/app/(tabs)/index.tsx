@@ -14,6 +14,7 @@ import { router, Link } from "expo-router";
 import { useColorScheme } from "@/components/useColorScheme";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Colors from "@/constants/Colors";
+import { useCrop, CropType } from "@/context/CropContext";
 
 const { width } = Dimensions.get("window");
 
@@ -53,9 +54,11 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const [selectedCrop, setSelectedCrop] = useState(0);
+  const { setCropType } = useCrop();
 
   const handleCropSelect = (index: number) => {
     setSelectedCrop(index);
+    setCropType(crops[index].name as CropType);
   };
 
   return (

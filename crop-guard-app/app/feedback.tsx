@@ -16,22 +16,18 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useColorScheme } from "@/components/useColorScheme";
 import Colors from "@/constants/Colors";
-import { useHistory } from "@/context/HistoryContext";
+import {
+  useHistory,
+  Recommendation,
+  ScanResult,
+} from "@/context/HistoryContext";
 import {
   getEndpointUrl,
   CROP_TO_MODEL_MAP,
   DEFAULT_MODEL,
 } from "@/config/apiConfig";
-
+import { useCrop } from "@/context/CropContext";
 const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
-
-type Recommendation = {
-  description: string;
-  symptoms: string[];
-  treatment: string;
-  prevention: string;
-  message: string;
-};
 
 type PredictResponse = {
   model: string;
@@ -40,29 +36,23 @@ type PredictResponse = {
   recommendation: Recommendation;
 };
 
+type Params = {
+  id?: string;
+  imageUri?: string;
+  fromHistory?: string;
+};
+
 export default function FeedbackScreen() {
-  const { addToHistory } = useHistory();
+  const { addToHistory, history } = useHistory();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
-  const {
-    imageUri,
-    diagnosis: initialDiagnosis,
-    confidence: initialConfidence,
-    cropType: initialCropType,
-    fromHistory,
-  } = useLocalSearchParams<{
-    imageUri: string;
-    diagnosis?: string;
-    confidence?: string;
-    cropType?: string;
-    fromHistory?: string;
-  }>();
-
+  const { id, imageUri, fromHistory } = useLocalSearchParams<Params>();
+  const { cropType: initialCropType } = useCrop();
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [diagnosis, setDiagnosis] = useState<string | null>(null);
   const [confidence, setConfidence] = useState<number | null>(null);
-  const [cropType, setCropType] = useState<string>("Maize");
+  const [cropType, setCropType] = useState<string>(initialCropType);
   const [isImageModalVisible, setIsImageModalVisible] = useState(false);
   const [recommendation, setRecommendation] = useState<Recommendation | null>(
     null
@@ -115,6 +105,7 @@ export default function FeedbackScreen() {
           confidence: Math.round(result.confidence * 100),
           date: new Date().toISOString(),
           cropType,
+          recommendation: result.recommendation,
         });
       }
     } catch (err) {
@@ -134,18 +125,20 @@ export default function FeedbackScreen() {
   };
 
   useEffect(() => {
-    if (initialDiagnosis && initialConfidence) {
-      setDiagnosis(initialDiagnosis);
-      setConfidence(parseInt(initialConfidence, 10));
-      if (initialCropType) setCropType(initialCropType);
-      setIsLoading(false);
-      return;
+    if (!imageUri || (fromHistory === "true" && id)) {
+      const record = history.find((item: ScanResult) => item.id === id);
+      if (record) {
+        setDiagnosis(record.diagnosis);
+        setConfidence(record.confidence);
+        setCropType(record.cropType);
+        setRecommendation(record.recommendation); // full object
+        setIsLoading(false);
+        return; // skip API call
+      }
     }
-    if (initialCropType) {
-      setCropType(initialCropType);
-    }
+    // else… do your normal callBackendAPI()
     callBackendAPI();
-  }, [imageUri, initialCropType]);
+  }, [fromHistory, id, imageUri]);
 
   const handleGoHome = () => router.replace("/(tabs)");
   const handleNewScan = () => router.push("/camera");
@@ -163,7 +156,7 @@ export default function FeedbackScreen() {
       : "times-circle";
 
   return (
-    <View
+    <ScrollView
       style={[
         styles.container,
         { backgroundColor: isDark ? "#111827" : "#f8fafc" },
@@ -349,12 +342,13 @@ export default function FeedbackScreen() {
                 </Text>
               </View>
 
-              <ScrollView
+              <View
                 style={[
                   styles.scrollContainer,
                   { backgroundColor: isDark ? "#374151" : "#f9fafb" },
+                  styles.scrollContent,
                 ]}
-                contentContainerStyle={styles.scrollContent}
+                // style={styles.scrollContent}
               >
                 {recommendation ? (
                   <>
@@ -460,7 +454,7 @@ export default function FeedbackScreen() {
                     No recommendations available.
                   </Text>
                 )}
-              </ScrollView>
+              </View>
             </View>
           </View>
         )}
@@ -501,7 +495,7 @@ export default function FeedbackScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -517,7 +511,7 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: "bold",
     marginLeft: 15,
   },
@@ -549,7 +543,7 @@ const styles = StyleSheet.create({
   resultsCard: {
     flex: 1,
     marginHorizontal: 16,
-    marginBottom: 16,
+    marginBottom: 50,
     borderRadius: 16,
     padding: 20,
     elevation: 3,
@@ -560,9 +554,12 @@ const styles = StyleSheet.create({
   },
   resultsContent: {
     flex: 1,
+    padding: 5,
+    height: "100%",
+    marginBottom: "70%",
   },
   summarySection: {
-    marginBottom: 20,
+    flex: 1,
   },
   resultRow: {
     flexDirection: "row",
