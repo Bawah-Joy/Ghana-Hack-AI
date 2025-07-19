@@ -1,4 +1,13 @@
 from pydantic import BaseModel
+from typing import List, Optional
+
+
+class Recommendation(BaseModel):
+    description: str
+    symptoms: List[str]
+    treatment: str
+    prevention: str
+    message: str
 
 class PredictRequest(BaseModel):
     model_name: str
@@ -7,3 +16,5 @@ class PredictResponse(BaseModel):
     model: str
     label: str
     confidence: float
+    recommendation: Recommendation
+
