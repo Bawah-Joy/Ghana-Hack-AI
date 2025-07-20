@@ -136,11 +136,16 @@ Similar performance is expected for cashew, cassava, and maize models, with vari
 Future Improvements
 
 Data Augmentation: Explore additional augmentation techniques if further robustness is needed.
+
 Model Optimization: Apply quantization and pruning to reduce model size for mobile deployment.
+
 Cross-Crop Model: Investigate a single model for all crops using multi-task learning.
-Train on more epochs to achieve even better accuracies and stop when it plateau
-Explore OUT OF DISTRIBUTION IMAGE CLASSIFICATION FOR AN EVEN BETTER ERROR HANDLING
-Apply MLops in the entire implementation
+
+Train on more epochs to achieve even better accuracies and stop when it plateau.
+
+Explore OUT OF DISTRIBUTION IMAGE CLASSIFICATION FOR AN EVEN BETTER ERROR HANDLING.
+
+Apply MLops in the entire implementation.
 
 Notes
 
