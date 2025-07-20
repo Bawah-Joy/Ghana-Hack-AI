@@ -4,7 +4,7 @@
 </p>
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![Live Demo](https://…)
+![Live Demo](https://youtu.be/eor4FfXHkQI)
 
 ## Architecture Diagram
 
