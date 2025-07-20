@@ -6,7 +6,7 @@
     "paths": {
       "@/*": ["./*"],
       "@/assets/*": ["./assets/*"],
-       "@/context/*": ["./context/*"]
+      "@/context/*": ["./context/*"]
     },
     "typeRoots": ["./node_modules/@types", "./.expo/types"]
   },
@@ -17,4 +17,5 @@
     ".expo/types/**/*.d.ts",
     "expo-env.d.ts"
   ]
+  // "exclude": ["node_modules"]
 }

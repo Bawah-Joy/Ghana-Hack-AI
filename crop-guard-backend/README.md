@@ -1,156 +1,193 @@
 # Crop Disease Detection API Server
 
-This project provides a **FastAPI** server that hosts and runs multiple deep learning models for crop disease detection. It allows you to send images of crop leaves via HTTP requests and receive predictions indicating disease type and confidence.
-
-The server currently supports the following models:
-
-- `xception_maize` – Maize disease detection via an Xception-based model
-- `xception_cassava` – Cassava disease detection via an Xception-based model
-- `xception_cashew` – Cashew disease detection via an Xception-based model
-- `xception_tomato` – Tomato disease detection via an Xception-based model
-
-> Note: Models are loaded on-demand and cached in memory to minimize latency while keeping RAM usage manageable.
+A **FastAPI** server hosting multiple Xception‑based deep learning models for detecting diseases in maize, cassava, cashew, and tomato leaves. Send images via HTTP and receive back the predicted disease, confidence score, and recommended treatment.
 
 ---
 
-## 🚀 Features
+## 📋 Features
 
-- **On-demand model loading**: Loads each model only when first requested.
-- **Unified image pipeline**: Shared preprocessing and inference logic across all Xception-based models.
-- **FastAPI + Uvicorn**: High-performance async server with built-in interactive docs (`/docs`).
+- **On‑demand model loading**: Each model is loaded the first time it’s requested and then cached.
+- **Unified image pipeline**: Shared resizing, normalization, and inference logic.
+- **Interactive docs**: Built‑in Swagger UI at `/docs`.
 - **CORS enabled**: Accepts requests from any origin (customize as needed).
 
 ---
 
-## 📋 Requirements
+## 🚀 Quick Start
 
-- Python 3.10+
-- Virtual environment (recommended)
-- Packages listed in `requirements.txt`:
+### 1. Clone & Prepare
 
-  - `fastapi`, `uvicorn`, `pillow`, `numpy`, `python-multipart`, `tensorflow` (or `tensorflow-cpu`)
+```bash
+git clone https://github.com/Bawah-Joy/Ghana-Hack-AI.git
+cd Ghana-Hack-AI/crop-guard-backend
+python -m venv venv
+source venv/bin/activate    # macOS/Linux
+venv\Scripts\activate       # Windows
+pip install --upgrade pip
+pip install -r requirements.txt
+```
 
----
+### 2. Download & Place Models
 
-## ⚙️ Installation
+Create a `model/` directory in the project root and download the pre-trained `.keras` files (examples below) into it:
 
-1. **Clone the repository**:
+```
+model/
+├─ xception_maize.keras
+├─ xception_cassava.keras
+├─ xception_cashew.keras
+└─ xception_tomato.keras
+```
 
-   ```bash
-   git clone https://github.com/Bawah-Joy/Ghana-Hack-AI.git
-   cd Ghana-Hack-AI/Prediction-Server
-   ```
+**Download links** (example Google Drive):
 
-2. **Create a virtual environment**:
+- [Maize Model](https://drive.google.com/file/d/1TLtyN5uzFUwMVL6TjTN3ejKZtZBXi2hw/view)
+- [Cassava Model](https://drive.google.com/file/d/11mvp4TuIQ5NATksrRki-z2gWjJyU-j85/view)
+- [Cashew Model](https://drive.google.com/file/d/1lxlHR6lWyOJJwZb9n6JST8yEd8VtcZK/view)
+- [Tomato Model](https://drive.google.com/file/d/1A9a-t3kspjdxqmqz11OoK62D9JPortw3/view)
 
-   ```bash
-   python -m venv venv
-   source venv/bin/activate    # Linux/Mac
-   venv\Scripts\activate     # Windows
-   ```
+### 3. Run Locally
 
-3. **Install dependencies**:
+#### Start the API
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
-4. **Ensure models are placed in `model/` folder**:
+#### (Optional) Ngrok Tunneling
 
-   ```text
-   model/
-   ├─ xception_maize.keras
-   ├─ xception_cassava.keras
-   ├─ xception_cashew.keras
-   └─ xception_tomato.keras
-   ```
+```bash
+ngrok http 8000
+```
 
----
-
-## Model Downloads
-
-To use the prediction server, you must download the pre-trained models and place them in the appropriate directory (`models/` by default). You can download them from the following links:
-
-- **Cassava Model**: [Download](https://drive.google.com/file/d/11mvp4TuIQ5NATksrRki-z2gWjJyU-j85/view?usp=sharing)
-- **Maize Model**: [Download](https://drive.google.com/file/d/1TLtyN5uzFUwMVL6TjTN3ejKZtZBXi2hw/view?usp=sharing)
-- **Tomato Model**: [Download](https://drive.google.com/file/d/1A9a-t3kspjdxqmqz11OoK62D9JPortw3/view?usp=sharing)
-- **Cashew Model**: [Download](https://drive.google.com/file/d/1lxlHR6lWyOJJwZb9cE6JST8yEd8VtcZK/view?usp=sharing)
-
-**After downloading:**
-
-1.  Create a folder named `models` in the project root if it doesn’t already exist.
-2.  Place the `.pkl` model files inside that `models/` folder.
-3.  The server will automatically load the relevant model based on the selected crop during prediction.
+Copy the HTTPS URL (e.g. `https://abcd1234.ngrok.io`) and use it in your frontend or API clients.
 
 ---
 
-## 🚀 Running Locally
+## ⚙️ Configuration
 
-1. **Start the server**:
+- No secrets required by default.
+- CORS is enabled for all origins in `app/main.py` via:
 
-   ```bash
-   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+  ```python
+  app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+  )
+  ```
+
+---
+
+## 📐 API Reference
+
+### Interactive Docs
+
+Browse and test all endpoints at:
+
+```
+http://localhost:8000/docs
+```
+
+### `/predict`
+
+- **Method:** `POST`
+- **Content-Type:** `multipart/form-data`
+- **Fields:**
+
+  - `file` (binary image file, e.g. JPEG/PNG)
+  - `model_name` (string; one of `xception_maize`, `xception_cassava`, `xception_cashew`, `xception_tomato`)
+
+#### Example `curl`
+
+```bash
+curl -X POST "https://<YOUR_NGROK>.ngrok.io/predict" \
+  -F "file=@/path/to/leaf.jpg;type=image/jpeg" \
+  -F "model_name=xception_maize"
+```
+
+#### Sample Response
+
+```json
+{
+  "label": "leaf blight",
+  "confidence": 0.87,
+  "details": {
+    "description": "Fungal disease that causes dead streaks on leaves.",
+    "symptoms": ["Long, greyish lesions", "Yellowing and dying leaves"],
+    "treatment": "Apply fungicides like Mancozeb. Ensure good air circulation.",
+    "prevention": "Avoid overhead watering; plant in well-spaced rows.",
+    "message": "Maize leaf blight detected. Spray fungicide and avoid wetting leaves during irrigation."
+  }
+}
+```
+
+---
+
+## 🔄 Model Loading & Inference Flow
+
+_All contained in `app/api/predict.py`:_
+
+1. **Load model on first request**
+
+   ```python
+   def load_model(name):
+       path = MODEL_DIR / f"{name}.keras"
+       return keras_load_model(path)
    ```
 
-2. **Access interactive docs**:
-   Open your browser at:
-   `http://localhost:8000/docs`
+2. **Preprocess & predict**
 
-3. **Test the `/predict` endpoint**:
-
-   - Select `POST /predict`
-   - Fill in **Model Name** (e.g. `xception_maize`)
-   - (Optional) **Text** field can be left blank
-   - Upload an image file
-   - Click **Execute**
-
-   Example `curl`:
-
-   ```bash
-   curl -X POST http://localhost:8000/predict \
-     -F "model_name=xception_maize" \
-     -F "file=@path/to/leaf.jpg"
+   ```python
+   def predict_image(file_bytes, model, model_name):
+       img = Image.open(BytesIO(file_bytes)).convert("RGB")
+       img = img.resize((299, 299))
+       arr = preprocess_input(np.expand_dims(np.array(img), 0))
+       preds = model.predict(arr)
+       idx = int(np.argmax(preds))
+       label = CLASS_NAMES[model_name][idx]
+       conf = float(np.max(preds))
+       return label, conf, DISEASE_DATA[model_name][label]
    ```
 
-   **Response**:
-
-   ```json
-   {
-     "model": "xception_maize",
-     "label": "leaf beetle",
-     "confidence": 0.87
-   }
-   ```
+3. **Return JSON** with `label`, `confidence`, and rich `details`.
 
 ---
 
 ## ☁️ Deployment on Render
 
-1. **Ensure `render.yml`** is in the project root.
-2. **Push** your branch to GitHub.
-3. On Render dashboard, **create a new Web Service** pointing to this repo + branch.
-4. Render will install dependencies (`pip install -r requirements.txt`) and start using:
+1. Ensure `render.yml` is present in the project root.
+2. Push to GitHub and connect the repo in Render.
+3. Render will:
 
-   ```bash
-   uvicorn app.main:app --host 0.0.0.0 --port $PORT
-   ```
+   - Install dependencies: `pip install -r requirements.txt`
+   - Launch the app using:
 
-Your live URL’s `/docs` endpoint will work the same way for testing.
+     ```bash
+     uvicorn app.main:app --host 0.0.0.0 --port $PORT
+     ```
 
 ---
 
 ## 🗂️ Project Structure
 
 ```
-Prediction-Server/
+crop-guard-backend/
 ├─ app/
-│  ├─ api/predict.py       # FastAPI routes
-│  ├─ core/model.py        # Model manager & loader
-│  ├─ pipelines/main_pipeline.py # Unified image preprocessing & inference
-│  ├─ schemas/predict.py   # Pydantic request/response models
-│  └─ main.py              # FastAPI app init + CORS
-├─ model/                  # Place .keras model files here
-├─ requirements.txt       # Python dependencies
-├─ render.yml             # Render deployment config
-└─ README.md              # This file
+│  ├─ api/
+│  │  └─ predict.py         # Routes & inference logic
+│  ├─ core/
+│  │  └─ model.py           # Model manager & loader
+│  ├─ pipelines/
+│  │  └─ main_pipeline.py   # Shared preprocessing flow
+│  ├─ schemas/
+│  │  └─ predict.py         # Request/response Pydantic models
+│  └─ main.py               # FastAPI app setup + CORS
+├─ model/                   # Place downloaded .keras files here
+├─ requirements.txt         # Python dependencies
+├─ render.yml               # Render deployment config
+└─ README.md                # This file
 ```
+
+---
