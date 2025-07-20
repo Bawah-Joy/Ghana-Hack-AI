@@ -134,12 +134,12 @@ We’re using **ngrok** for local testing due to model size constraints:
 
 ## Performance Metrics
 
-| Crop        | Accuracy | F1 Score | Inference Time | Model Size |
-| ----------- | -------- | -------- | -------------- | ---------- |
-| **Cashew**  | 99.28%   | \~0.98   | \~1.4 s        | 1.4 GB     |
-| **Cassava** | 98.72%   | \~0.96   | \~1.3 s        | 1.4 GB     |
-| **Maize**   | 95.85%   | \~0.94   | \~1.2 s        | 1.4 GB     |
-| **Tomato**  | 96.82%   | \~0.96   | \~1.1 s        | 1.4 GB     |
+| Crop        | Accuracy |  Inference Time | Model Size |
+| ----------- | -------- |  -------------- | ---------- |
+| **Cashew**  | 99.28%   |  \~1.4 s        | 1.4 GB     |
+| **Cassava** | 98.72%   |  \~1.3 s        | 1.4 GB     |
+| **Maize**   | 95.85%   |  \~1.2 s        | 1.4 GB     |
+| **Tomato**  | 96.82%   |  \~1.1 s        | 1.4 GB     |
 
 ### 🔍 Notes:
 
@@ -167,7 +167,7 @@ We’re using **ngrok** for local testing due to model size constraints:
 - **Pre-trained Model:** Xception from TensorFlow Hub.
 - **Libraries & Tools:**
 
-  - FastAPI, Uvicorn, TensorFlow 2, Hugging Face Transformers
+  - FastAPI, Uvicorn, TensorFlow 2
   - Expo, React Native, Expo Camera/Image Picker
   - ngrok for local tunneling
 
