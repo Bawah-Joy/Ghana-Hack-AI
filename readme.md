@@ -3,8 +3,9 @@
     <h1 align="center">Crop Guard</h1>
 </p>
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
-![Live Demo](https://youtu.be/eor4FfXHkQI)
+![Version](https://img.shields.io/badge/version-1.0.0-blue).
+
+# Live Demo.  https://youtu.be/eor4FfXHkQI
 
 ## Architecture Diagram
 
