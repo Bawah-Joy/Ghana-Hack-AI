@@ -1,21 +1,24 @@
-# Crop Guard 📱🌾
+<p align="center" style="border-radius: 50%;">
+    <img style="border-radius: 50%;" src="./crop-guard-demo-assets/icon.png" width="100" height="100" alt="Architecture Diagram"/>
+    <h1 align="center">Crop Guard</h1>
+</p>
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue)
 ![Live Demo](https://…)
 
 ## Table of Contents
 
-1. [Project Overview](#crop-guard-📱🌾)
-2. [Table of Contents](#📑-table-of-contents)
-3. [Frontend Setup & Usage](#🖥️-frontend-setup--usage)
-4. [Backend Setup & Usage](#⚙️-backend-setup--usage)
-5. [Architecture Diagram](#🏗️-architecture-diagram)
-6. [Deployment & Next Steps](#🚢-deployment--next-steps)
-7. [Performance Metrics](#📊-performance-metrics)
-8. [Future Work](#🌱-future-work)
-9. [Acknowledgments](#🙏-acknowledgments)
+1. [Project Overview](#crop-guard)
+2. [Table of Contents](#table-of-contents)
+3. [Frontend Setup & Usage](#frontend-setup--usage)
+4. [Backend Setup & Usage](#backend-setup--usage)
+5. [Architecture Diagram](#architecture-diagram)
+6. [Deployment & Next Steps](#deployment--next-steps)
+7. [Performance Metrics](#performance-metrics)
+8. [Future Work](#future-work)
+9. [Acknowledgments](#acknowledgments)
 
-## Crop Guard 📱🌾
+## Crop Guard
 
 **AI‑Powered Crop Disease Detection**
 Crop Guard is a React Native mobile app that helps Ghanaian farmers—especially those just starting out—identify diseases in key crops (maize, cassava, cashew, tomato) using their smartphone camera. By streamlining disease diagnosis, it promotes early intervention and supports Ghana’s agricultural development.
@@ -43,7 +46,7 @@ Ghana-Hack-AI/
 
 ---
 
-## 🖥️ Frontend Setup & Usage
+## Frontend Setup & Usage
 
 ### 1. Prerequisites
 
@@ -133,7 +136,7 @@ _(See full list in [package.json](./crop-guard-frontend/package.json))_
 
 ---
 
-## ⚙️ Backend Setup & Usage
+## Backend Setup & Usage
 
 ### 1. Prerequisites
 
@@ -300,7 +303,7 @@ def predict_image(file_bytes, model, model_name):
 
 ---
 
-## 🏗️ Architecture Diagram
+## Architecture Diagram
 
 Below is a high‑level flow of how Crop Guard works, from user action in the app to model inference and back:
 
@@ -356,7 +359,7 @@ We’re using **ngrok** for local testing due to model size constraints:
 
 ---
 
-## 📊 Performance Metrics
+## Performance Metrics
 
 > _Fill in these placeholders once you have the exact numbers from your teammate._
 
@@ -374,7 +377,7 @@ We’re using **ngrok** for local testing due to model size constraints:
 
 ---
 
-## 🌱 Future Work
+## Future Work
 
 - **Model Optimization:** Convert to TensorFlow Lite & quantize weights to reduce size.
 - **Offline Support:** Bundle the TFLite model in the app so it works without internet.
@@ -385,7 +388,7 @@ We’re using **ngrok** for local testing due to model size constraints:
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **Dataset:** CCMT Dataset for cashew, cassava, maize, and tomato images.
 - **Pre-trained Model:** Xception from TensorFlow Hub.
