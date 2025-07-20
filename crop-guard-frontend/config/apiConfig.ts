@@ -5,9 +5,16 @@
  *  - DEV : your ngrok or local dev server
  *  - PROD: your hosted backend
  */
-const MODE = process.env.MODE || "dev";
-const DEV_BASE_URL = process.env.DEV_BASE_URL;
-const PROD_BASE_URL = process.env.PROD_BASE_URL;
+
+import Constants from "expo-constants";
+
+const extra = Constants.expoConfig?.extra || {};
+const DEV_BASE_URL = extra.DEV_BASE_URL;
+const PROD_BASE_URL = extra.PROD_BASE_URL;
+const MODE = extra.MODE || "dev";
+// const DEV_BASE_URL = process.env.DEV_BASE_URL;
+// const PROD_BASE_URL = process.env.PROD_BASE_URL;
+console.log(DEV_BASE_URL);
 
 /** Pick the right base URL */
 const BASE_URL = MODE === "dev" ? DEV_BASE_URL : PROD_BASE_URL;

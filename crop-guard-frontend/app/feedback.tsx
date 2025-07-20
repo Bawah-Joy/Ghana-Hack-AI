@@ -80,7 +80,7 @@ export default function FeedbackScreen() {
         type: "image/jpeg",
         name: "plant_image.jpg",
       } as any);
-      console.table("Endpoint: ", getEndpointUrl("PREDICT"));
+      console.log("Endpoint: ", getEndpointUrl("PREDICT"));
 
       const response = await fetch(getEndpointUrl("PREDICT"), {
         method: "POST",
@@ -109,7 +109,7 @@ export default function FeedbackScreen() {
         });
       }
     } catch (err) {
-      console.error(err);
+      console.error("Some error", err);
       setError(err instanceof Error ? err.message : String(err));
       Alert.alert(
         "Analysis Failed",
@@ -152,8 +152,8 @@ export default function FeedbackScreen() {
     conf >= 90
       ? "check-circle"
       : conf >= 70
-      ? "exclamation-triangle"
-      : "times-circle";
+        ? "exclamation-triangle"
+        : "times-circle";
 
   return (
     <ScrollView
