@@ -132,6 +132,16 @@ Results
 The tomato model achieved a validation accuracy of 96.82% after 10 epochs, indicating strong performance in classifying five tomato diseases.
 The other three crops achieved similrar accuracies. Please refer to the respective notebooks for train and validation accuracies for each
 Similar performance is expected for cashew, cassava, and maize models, with variations depending on the number of classes and dataset size for each crop.
+# tomato
+<img width="1275" height="450" alt="image" src="https://github.com/user-attachments/assets/320c3ec9-9b5e-4504-94cb-828793d2c7e8" />
+# cassava
+<img width="1280" height="452" alt="image" src="https://github.com/user-attachments/assets/9929ea4a-1154-41c9-82ac-e57910eb6f1f" />
+# cashew
+<img width="1280" height="452" alt="image" src="https://github.com/user-attachments/assets/684a3923-56ca-4b31-b5b5-188ee4e9e9e1" />
+# maize
+<img width="1280" height="452" alt="image" src="https://github.com/user-attachments/assets/a186dcae-7ef0-4967-8cc5-762e0884d42d" />
+
+
 
 Future Improvements
 
